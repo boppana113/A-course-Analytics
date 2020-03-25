@@ -1,1 +1,2 @@
-data = read.csv("gender_submission",header = TRUE)
+gender = read.csv("gender_submission.csv",header = TRUE)
+train_data = read.csv("train.csv",header = True)
