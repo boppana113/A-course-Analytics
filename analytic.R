@@ -1,7 +1,9 @@
 # Load Libraries
 library(corrplot)
+library(dplyr)
+library(ggplot2)
 
-# Load datasets
+R# Load datasets
 gender = read.csv("gender_submission.csv",header = TRUE)
 data = read.csv("train.csv",header = TRUE)
 
@@ -25,5 +27,11 @@ summary(data_lived)
 summary(data_died)
 
 ## Investigate Male vs Female Survival Rates
-hist(data[data$Survived==1,]$Sex, col="lightgreen", xlab="Age",main = "Survived by Gender")
-hist(data[data$Survived==0,]$Sex, col="firebrick2", xlab="Age",main = "Died by Gender")
+ggplot(data,aes(x=Sex)) +
+  geom_bar()
+
+ggplot(data_lived,aes(x=Sex)) +
+  geom_bar()
+
+ggplot(data_died,aes(x=Sex)) +
+  geom_bar()
