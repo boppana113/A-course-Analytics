@@ -5,22 +5,23 @@ library(ggplot2)
 library(tidyr)
 # Load datasets
 data = read.csv("train.csv",header = TRUE)
+output <- data
 data <- separate(data = data, col=Name, into = c("lastName","firstName"), sep=",")
 
 # Create Data frame that removes rows with "NA" fields
 df <- na.omit(data)
 
 # Seperate into Adults, Children, and those w/o age listed
-adults = subset(df,Age>=18)
-children = subset(df,Age<18)
-NPerson = subset(data,is.na(Age))
-sib_sp = subset(data,SibSp>0)
-par_ch = subset(data, Parch>0)
+adults = subset(df,Age>=18)       # Adults
+children = subset(df,Age<18)      # Children 
+NPerson = subset(data,is.na(Age)) # No Age Listed
+sib_sp = subset(data,SibSp>0)     # Siblings/Spouses
+par_ch = subset(data, Parch>0)    # Parent/Children
 
 # Find mean age
-mean_age = mean(df$Age)
-mean_age_adult = mean(adults$Age)
-mean_age_child = mean(children$Age)
+mean_age = mean(df$Age)               # Mean Age
+mean_age_adult = mean(adults$Age)     # Mean Adult Age
+mean_age_child = mean(children$Age)   # Mean Child Age
 
 # Check if they are Married Women
 for (k in 1:dim(NPerson)[1])
@@ -120,4 +121,5 @@ df <- rbind(df,temp)
 # Update NPerson based upon who is still unknown
 NPerson = subset(NPerson,is.na(Age))
 
-Data$Age <- df$Age
+data$Age <- df$Age
+write.csv(data,"data_filtered.csv")
