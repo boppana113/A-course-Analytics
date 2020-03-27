@@ -2,49 +2,121 @@
 library(corrplot)
 library(dplyr)
 library(ggplot2)
-
+library(tidyr)
 # Load datasets
-gender = read.csv("gender_submission.csv",header = TRUE)
 data = read.csv("train.csv",header = TRUE)
+data <- separate(data = data, col=Name, into = c("lastName","firstName"), sep=",")
 
-# Remove Rows with incomplete cases 
-data <- na.omit(data)
-data <- subset(data, select = -c(1,4,9)) #Removed ID, Name, and Ticket number 
-write.csv(data,"train_filtered.csv")
-dim(data)
+# Create Data frame that removes rows with "NA" fields
+df <- na.omit(data)
 
-hist(data[data$Survived==1,]$Age, col="lightgreen", xlab="Age",main = "Survived by Age")
-hist(data[data$Survived==0,]$Age, col="firebrick2", xlab="Age",main = "Died by Age")
+# Seperate into Adults, Children, and those w/o age listed
+adults = subset(df,Age>=18)
+children = subset(df,Age<18)
+NPerson = subset(data,is.na(Age))
+sib_sp = subset(data,SibSp>0)
+par_ch = subset(data, Parch>0)
 
-pairs(data)
+# Find mean age
+mean_age = mean(df$Age)
+mean_age_adult = mean(adults$Age)
+mean_age_child = mean(children$Age)
 
-# Bifurcate into those who survived and those who died
-# data_lived <- subset(data, Survived==1)
-# data_died <- subset(data, Survived==0)
-data_lived <- subset(data, Survived==1, select = -c(Survived))
-data_died <- subset(data, Survived==0, select = -c(Survived))
+# Check if they are Married Women
+for (k in 1:dim(NPerson)[1])
+{
+  # Update the age to be average adult age
+  if ((is.na(NPerson$Age[k]) & grepl("Mrs.",NPerson$firstName[k],fixed = TRUE)))
+  {
+    NPerson$Age[k] <- mean_age_adult
+  }
+}
 
-summary(data_lived)
-summary(data_died)
+# Append df with updated data from NPerson
+temp <- subset(NPerson,!is.na(Age))
+df <- rbind(df,temp)
 
-## Investigate Male vs Female Survival Rates
-ggplot(data,aes(x=Sex)) +
-  geom_bar()
+#Update NPerson based upon who is still unknown
+NPerson = subset(NPerson,is.na(Age))
 
-ggplot(data_lived,aes(x=Sex)) +
-  geom_bar()
+# Check if individuals in NPerson had a sibling/spouse in df
+for (i in 1:(dim(NPerson)[1]))
+{
+  # Check if they have siblings/spouses
+  if (NPerson$SibSp[i] > 0) 
+  {
+    # Check their last name across the sib_sp dataset 
+    for (j in 1:dim(df)[1]) 
+    {
+      # Check if they have the same last name
+      if (NPerson$lastName[i] == df$lastName[j])
+      {
+        # Check if they have the same number of spouse/siblings
+        if (NPerson$SibSp[i] == df$SibSp[j])
+        {
+          # Give the Pair the same age
+          NPerson$Age[i] = df$Age[j]
+        }
+      }
+    }
+  }
+}
 
-ggplot(data_died,aes(x=Sex)) +
-  geom_bar()
+# Append df with updated data from NPerson
+temp <- subset(NPerson,!is.na(Age))
+df <- rbind(df,temp)
 
-ggplot(data_lived,aes(x=Pclass)) +
-  geom_bar()
+#Update NPerson based upon who is still unknown
+NPerson = subset(NPerson,is.na(Age))
 
-ggplot(data_died,aes(x=Pclass)) +
-  geom_bar()
+# Check if individuals in NPerson had a parent/child 
+for (i in 1:(dim(NPerson)[1]))
+{
+  # Check if they have parents/children
+  if (NPerson$Parch[i] > 0) 
+  {
+    # Check their last name across the complete data set 
+    for (j in 1:dim(df)[1]) 
+    {
+      # Make sure you are not looking at the same row of data
+      # Check if they have the same last name
+      if (NPerson$lastName[i] == df$lastName[j])
+      {
+        # If reference is adult assume the unknown person is a child
+        if (df$Age[j] > 18)
+        {
+          NPerson$Age[i] <- mean_age_child
+          
+        }
+        # If reference is child assume the person is an adult
+        else if (df$Age[j] < 18)
+        {
+          NPerson$Age[i] <- mean_age_adult
+        }
+        
+        else 
+        {
+          NPerson$Age[i] <- mean_age
+        }
+      }
+    }
+  }
+}
 
-ggplot(data_lived,aes(x=Embarked)) +
-  geom_bar()
+# Append df with updated data from NPerson
+temp <- subset(NPerson,!is.na(Age))
+df <- rbind(df,temp)
 
-ggplot(data_died,aes(x=Embarked)) +
-  geom_bar()
+# Update NPerson based upon who is still unknown
+NPerson = subset(NPerson,is.na(Age))
+
+# Assume the rest have the average age of the entire group
+NPerson$Age <- mean_age
+
+sum(df$Age)
+# Append df with updated data from NPerson
+temp <- subset(NPerson,!is.na(Age))
+df <- rbind(df,temp)
+
+# Update NPerson based upon who is still unknown
+NPerson = subset(NPerson,is.na(Age))
