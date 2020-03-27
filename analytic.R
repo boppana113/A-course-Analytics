@@ -113,10 +113,11 @@ NPerson = subset(NPerson,is.na(Age))
 # Assume the rest have the average age of the entire group
 NPerson$Age <- mean_age
 
-sum(df$Age)
 # Append df with updated data from NPerson
 temp <- subset(NPerson,!is.na(Age))
 df <- rbind(df,temp)
 
 # Update NPerson based upon who is still unknown
 NPerson = subset(NPerson,is.na(Age))
+
+Data$Age <- df$Age
