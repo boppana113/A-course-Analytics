@@ -122,4 +122,5 @@ df <- rbind(df,temp)
 NPerson = subset(NPerson,is.na(Age))
 
 data$Age <- df$Age
+data$Embarked[830] <- "Q"
 write.csv(data,"data_filtered.csv")
