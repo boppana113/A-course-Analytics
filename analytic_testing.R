@@ -3,13 +3,14 @@ library(corrplot)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
+library(compare)
 # Load datasets
-data = read.csv("train.csv",header = TRUE)
+data = read.csv("test.csv",header = TRUE)
 output <- data
 data <- separate(data = data, col=Name, into = c("lastName","firstName"), sep=",")
 
 # Create Data frame that removes rows with "NA" fields
-df <- na.omit(data)
+df <- na.omit(data,col=c("Age"))
 
 # Seperate into Adults, Children, and those w/o age listed
 adults = subset(df,Age>=18)       # Adults
@@ -18,10 +19,14 @@ NPerson = subset(data,is.na(Age)) # No Age Listed
 sib_sp = subset(data,SibSp>0)     # Siblings/Spouses
 par_ch = subset(data, Parch>0)    # Parent/Children
 
+D1 <- rbind(df,NPerson)
+D2 = subset(data, !(D1 %in% df))
+write.csv(D1,"temp.csv")
+
 # Find mean age
-mean_age = mean(df$Age)               # Mean Age
-mean_age_adult = mean(adults$Age)     # Mean Adult Age
-mean_age_child = mean(children$Age)   # Mean Child Age
+mean_age = 29.699               # Mean Age
+mean_age_adult = 33.583     # Mean Adult Age
+mean_age_child = 9.041   # Mean Child Age
 
 # Check if they are Married Women
 for (k in 1:dim(NPerson)[1])
@@ -122,31 +127,23 @@ df <- rbind(df,temp)
 NPerson = subset(NPerson,is.na(Age))
 
 data$Age <- df$Age
-for (i in 1:(dim(data)[1]))
-{
-  if(is.na(data$Age[i]))
-  {
-    data$Age[i]<-mean_age
-  }
- 
-}
 
 x <- factor(c("0","1"))
 ac <- data.frame(adultchild=x)
 row_Size = dim(data)[1]
 a = 0
 c = 0
-for (i in 1:(dim(df)[1]))
+for (i in 1:(dim(data)[1]))
 {
-  if (df$Age[i]<18)
+  if (data$Age[i]<18)
   {
     ac[i,1] = x[2]
     c = c + 1
   }
-  else if (df$Age[i]>=18) {
+  else if (data$Age[i]>=18) {
     a = a + 1
     ac[i,1] = x[1]
   }
 }
-data_output <- cbind(df,ac)
+data_output <- cbind(data,ac)
 write.csv(data_output,"testing_filtered.csv")
